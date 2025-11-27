@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "ZBBD1LhJBRMBHnnSdY79Z9IypDomm4g2WY5Pokne+wY=",
+  "Source": "TomasDanceSite.Api",
+  "BasePath": "_content/TomasDanceSite.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

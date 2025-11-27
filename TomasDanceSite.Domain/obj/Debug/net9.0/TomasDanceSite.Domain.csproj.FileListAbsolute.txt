@@ -1,0 +1,11 @@
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Domain\bin\Debug\net9.0\TomasDanceSite.Domain.deps.json
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Domain\bin\Debug\net9.0\TomasDanceSite.Domain.dll
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Domain\bin\Debug\net9.0\TomasDanceSite.Domain.pdb
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Domain\obj\Debug\net9.0\TomasDanceSite.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Domain\obj\Debug\net9.0\TomasDanceSite.Domain.AssemblyInfoInputs.cache
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Domain\obj\Debug\net9.0\TomasDanceSite.Domain.AssemblyInfo.cs
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Domain\obj\Debug\net9.0\TomasDanceSite.Domain.csproj.CoreCompileInputs.cache
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Domain\obj\Debug\net9.0\TomasDanceSite.Domain.dll
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Domain\obj\Debug\net9.0\refint\TomasDanceSite.Domain.dll
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Domain\obj\Debug\net9.0\TomasDanceSite.Domain.pdb
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Domain\obj\Debug\net9.0\ref\TomasDanceSite.Domain.dll

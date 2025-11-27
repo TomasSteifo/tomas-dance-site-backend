@@ -1,0 +1,15 @@
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Application\bin\Debug\net9.0\TomasDanceSite.Application.deps.json
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Application\bin\Debug\net9.0\TomasDanceSite.Application.dll
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Application\bin\Debug\net9.0\TomasDanceSite.Application.pdb
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Application\bin\Debug\net9.0\TomasDanceSite.Domain.dll
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Application\bin\Debug\net9.0\TomasDanceSite.Domain.pdb
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Application\obj\Debug\net9.0\TomasDanceSite.Application.csproj.AssemblyReference.cache
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Application\obj\Debug\net9.0\TomasDanceSite.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Application\obj\Debug\net9.0\TomasDanceSite.Application.AssemblyInfoInputs.cache
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Application\obj\Debug\net9.0\TomasDanceSite.Application.AssemblyInfo.cs
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Application\obj\Debug\net9.0\TomasDanceSite.Application.csproj.CoreCompileInputs.cache
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Application\obj\Debug\net9.0\TomasDan.B79AC489.Up2Date
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Application\obj\Debug\net9.0\TomasDanceSite.Application.dll
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Application\obj\Debug\net9.0\refint\TomasDanceSite.Application.dll
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Application\obj\Debug\net9.0\TomasDanceSite.Application.pdb
+C:\Users\mikae\TomasDanceSite\TomasDanceSite.Application\obj\Debug\net9.0\ref\TomasDanceSite.Application.dll
