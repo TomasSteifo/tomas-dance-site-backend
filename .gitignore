@@ -1,0 +1,17 @@
+# Ignore build folders
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# JetBrains Rider / VS Code
+.idea/
+.vscode/
+
+# OS files
+*.swp
+*.DS_Store
+Thumbs.db
