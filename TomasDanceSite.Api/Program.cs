@@ -27,12 +27,14 @@ builder.Services.AddAutoMapper(cfg =>
 {
     cfg.AddProfile<ServiceOfferingProfile>();
     cfg.AddProfile<ClientProfile>();
-
+    cfg.AddProfile<BookingProfile>(); 
 });
 
 // Register application services
 builder.Services.AddScoped<IServiceOfferingService, ServiceOfferingService>();
 builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
+
 
 
 var app = builder.Build();

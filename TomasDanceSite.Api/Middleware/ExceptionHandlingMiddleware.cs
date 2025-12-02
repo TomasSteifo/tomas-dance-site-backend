@@ -1,5 +1,7 @@
 ﻿using System.Net;
 using System.Text.Json;
+using TomasDanceSite.Application.Exceptions;
+
 
 namespace TomasDanceSite.Api.Middleware
 {
@@ -22,18 +24,29 @@ namespace TomasDanceSite.Api.Middleware
             }
             catch (Exception ex)
             {
-                // Log the error
                 _logger.LogError(ex, "An unhandled exception occurred.");
 
-                // Return clean JSON error response
-                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 context.Response.ContentType = "application/json";
+
+                var statusCode = ex switch
+                {
+                    ValidationException => (int)HttpStatusCode.BadRequest,      // 400
+                    BusinessRuleException => (int)HttpStatusCode.Conflict,      // 409
+                    NotFoundException => (int)HttpStatusCode.NotFound,          // 404
+                    ArgumentException => (int)HttpStatusCode.BadRequest,        // 400 (legacy / fallback)
+                    _ => (int)HttpStatusCode.InternalServerError                // 500
+                };
+
+                context.Response.StatusCode = statusCode;
 
                 var errorResponse = new
                 {
-                    StatusCode = context.Response.StatusCode,
-                    Message = "An unexpected error occurred. Please try again later.",
+                    StatusCode = statusCode,
+                    Message = ex.Message,              // now show the real business/validation message
+                    ExceptionType = ex.GetType().FullName,
                     TraceId = context.TraceIdentifier
+                    // You *can* keep Error = ex.ToString() in dev if you want, but it’s noisy:
+                    // Error = ex.ToString()
                 };
 
                 var json = JsonSerializer.Serialize(errorResponse);
