@@ -33,6 +33,83 @@ public class BookingService : IBookingService
     }
 
     // ---------------------------------------------------------
+    // Search with filtering + sorting
+    // ---------------------------------------------------------
+    public async Task<List<BookingDto>> SearchAsync(BookingQueryParameters query)
+    {
+        // 1️⃣ Start with base query
+        var bookingsQuery = _dbContext.Bookings
+            .AsNoTracking()
+            .AsQueryable();
+
+        // 2️⃣ Apply filters if provided
+
+        // Status filter
+        if (query.Status.HasValue)
+        {
+            bookingsQuery = bookingsQuery
+                .Where(b => b.Status == query.Status.Value);
+        }
+
+        // Client filter
+        if (query.ClientId.HasValue)
+        {
+            bookingsQuery = bookingsQuery
+                .Where(b => b.ClientId == query.ClientId.Value);
+        }
+
+        // ServiceOffering filter
+        if (query.ServiceOfferingId.HasValue)
+        {
+            bookingsQuery = bookingsQuery
+                .Where(b => b.ServiceOfferingId == query.ServiceOfferingId.Value);
+        }
+
+        // Date range filters (PreferredDateTime)
+        if (query.FromDate.HasValue)
+        {
+            bookingsQuery = bookingsQuery
+                .Where(b => b.PreferredDateTime >= query.FromDate.Value);
+        }
+
+        if (query.ToDate.HasValue)
+        {
+            bookingsQuery = bookingsQuery
+                .Where(b => b.PreferredDateTime <= query.ToDate.Value);
+        }
+
+        // 3️⃣ Sorting
+        var sortBy = (query.SortBy ?? "date").ToLowerInvariant();
+        var descending = query.Descending;
+
+        bookingsQuery = (sortBy, descending) switch
+        {
+            // Sort by PreferredDateTime
+            ("date", false) => bookingsQuery.OrderBy(b => b.PreferredDateTime),
+            ("date", true) => bookingsQuery.OrderByDescending(b => b.PreferredDateTime),
+
+            // Sort by CreatedAtUtc
+            ("created", false) => bookingsQuery.OrderBy(b => b.CreatedAtUtc),
+            ("created", true) => bookingsQuery.OrderByDescending(b => b.CreatedAtUtc),
+
+            // Sort by Status (enum)
+            ("status", false) => bookingsQuery.OrderBy(b => b.Status),
+            ("status", true) => bookingsQuery.OrderByDescending(b => b.Status),
+
+            // Default fallback: sort by PreferredDateTime
+            (_, false) => bookingsQuery.OrderBy(b => b.PreferredDateTime),
+            (_, true) => bookingsQuery.OrderByDescending(b => b.PreferredDateTime)
+        };
+
+        // 4️⃣ Execute query
+        var entities = await bookingsQuery.ToListAsync();
+
+        // 5️⃣ Map to DTOs
+        return _mapper.Map<List<BookingDto>>(entities);
+    }
+
+
+    // ---------------------------------------------------------
     // Get by id
     // ---------------------------------------------------------
     public async Task<BookingDto?> GetByIdAsync(int id)

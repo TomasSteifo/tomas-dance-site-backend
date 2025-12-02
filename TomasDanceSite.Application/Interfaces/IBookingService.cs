@@ -9,4 +9,6 @@ public interface IBookingService
     Task<BookingDto> CreateAsync(CreateBookingDto dto);
     Task<BookingDto?> UpdateAsync(int id, UpdateBookingDto dto);
     Task<bool> DeleteAsync(int id);
+    Task<List<BookingDto>> SearchAsync(BookingQueryParameters query);
+
 }

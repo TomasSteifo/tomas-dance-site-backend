@@ -27,6 +27,25 @@ namespace TomasDanceSite.Api.Controllers
             return Ok(bookings);
         }
 
+        // GET: api/Bookings/search
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<BookingDto>>> Search([FromQuery] BookingQueryParameters query)
+        {
+            _logger.LogInformation(
+                "Searching bookings with Status={Status}, ClientId={ClientId}, ServiceOfferingId={ServiceOfferingId}, FromDate={FromDate}, ToDate={ToDate}, SortBy={SortBy}, Descending={Descending}",
+                query.Status,
+                query.ClientId,
+                query.ServiceOfferingId,
+                query.FromDate,
+                query.ToDate,
+                query.SortBy,
+                query.Descending);
+
+            var results = await _bookingService.SearchAsync(query);
+            return Ok(results);
+        }
+
+
         // GET: api/Bookings/5
         [HttpGet("{id:int}")]
         public async Task<ActionResult<BookingDto>> GetById(int id)
