@@ -3,6 +3,9 @@ using TomasDanceSite.Infrastructure.Persistence;
 using TomasDanceSite.Application.Interfaces;
 using TomasDanceSite.Application.Services;
 using TomasDanceSite.Api.Middleware;
+using TomasDanceSite.Application.Mappings;
+using Microsoft.Extensions.DependencyInjection;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,8 +23,17 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddProfile<ServiceOfferingProfile>();
+    cfg.AddProfile<ClientProfile>();
+
+});
+
 // Register application services
 builder.Services.AddScoped<IServiceOfferingService, ServiceOfferingService>();
+builder.Services.AddScoped<IClientService, ClientService>();
+
 
 var app = builder.Build();
 

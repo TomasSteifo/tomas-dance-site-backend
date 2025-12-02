@@ -1,129 +1,85 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using TomasDanceSite.Application.DTOs;
 using TomasDanceSite.Application.Interfaces;
 using TomasDanceSite.Domain.Entities;
 using TomasDanceSite.Infrastructure.Persistence;
 
-namespace TomasDanceSite.Application.Services;
-
-public class ServiceOfferingService : IServiceOfferingService
+namespace TomasDanceSite.Application.Services
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    public ServiceOfferingService(ApplicationDbContext dbContext)
+    public class ServiceOfferingService : IServiceOfferingService
     {
-        _dbContext = dbContext;
-    }
+        private readonly ApplicationDbContext _dbContext;
+        private readonly IMapper _mapper;
 
-    public async Task<List<ServiceOfferingDto>> GetAllAsync()
-    {
-        return await _dbContext.ServiceOfferings
-            .AsNoTracking()
-            .Select(s => new ServiceOfferingDto
-            {
-                Id = s.Id,
-                Name = s.Name,
-                Description = s.Description,
-                ServiceType = s.ServiceType,
-                BasePriceSek = s.BasePriceSek,
-                DurationMinutes = s.DurationMinutes,
-                IsActive = s.IsActive
-            })
-            .ToListAsync();
-    }
-
-    public async Task<ServiceOfferingDto?> GetByIdAsync(int id)
-    {
-        var entity = await _dbContext.ServiceOfferings
-            .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == id);
-
-        if (entity == null)
-            return null;
-
-        return new ServiceOfferingDto
+        public ServiceOfferingService(ApplicationDbContext dbContext, IMapper mapper)
         {
-            Id = entity.Id,
-            Name = entity.Name,
-            Description = entity.Description,
-            ServiceType = entity.ServiceType,
-            BasePriceSek = entity.BasePriceSek,
-            DurationMinutes = entity.DurationMinutes,
-            IsActive = entity.IsActive
-        };
-    }
+            _dbContext = dbContext;
+            _mapper = mapper;
+        }
 
-    public async Task<ServiceOfferingDto> CreateAsync(CreateServiceOfferingDto dto)
-    {
-        var entity = new ServiceOffering
+        public async Task<List<ServiceOfferingDto>> GetAllAsync()
         {
-            Name = dto.Name,
-            Description = dto.Description,
-            ServiceType = dto.ServiceType,
-            BasePriceSek = dto.BasePriceSek,
-            DurationMinutes = dto.DurationMinutes,
-            IsActive = true,
-            CreatedAtUtc = DateTime.UtcNow
-        };
+            var entities = await _dbContext.ServiceOfferings
+                .AsNoTracking()
+                .ToListAsync();
 
-        _dbContext.ServiceOfferings.Add(entity);
-        await _dbContext.SaveChangesAsync();
+            return _mapper.Map<List<ServiceOfferingDto>>(entities);
+        }
 
-        return new ServiceOfferingDto
+        public async Task<ServiceOfferingDto?> GetByIdAsync(int id)
         {
-            Id = entity.Id,
-            Name = entity.Name,
-            Description = entity.Description,
-            ServiceType = entity.ServiceType,
-            BasePriceSek = entity.BasePriceSek,
-            DurationMinutes = entity.DurationMinutes,
-            IsActive = entity.IsActive
-        };
-    }
+            var entity = await _dbContext.ServiceOfferings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == id);
 
-    public async Task<ServiceOfferingDto?> UpdateAsync(int id, UpdateServiceOfferingDto dto)
-    {
-        var entity = await _dbContext.ServiceOfferings.FirstOrDefaultAsync(s => s.Id == id);
+            if (entity == null)
+                return null;
 
-        if (entity == null)
-            return null;
+            return _mapper.Map<ServiceOfferingDto>(entity);
+        }
 
-        entity.Name = dto.Name;
-        entity.Description = dto.Description;
-        entity.ServiceType = dto.ServiceType;
-        entity.BasePriceSek = dto.BasePriceSek;
-        entity.DurationMinutes = dto.DurationMinutes;
-        entity.IsActive = dto.IsActive;
-
-        await _dbContext.SaveChangesAsync();
-
-        return new ServiceOfferingDto
+        public async Task<ServiceOfferingDto> CreateAsync(CreateServiceOfferingDto dto)
         {
-            Id = entity.Id,
-            Name = entity.Name,
-            Description = entity.Description,
-            ServiceType = entity.ServiceType,
-            BasePriceSek = entity.BasePriceSek,
-            DurationMinutes = entity.DurationMinutes,
-            IsActive = entity.IsActive
-        };
-    }
+            var entity = _mapper.Map<ServiceOffering>(dto);
 
-    public async Task<bool> DeleteAsync(int id)
-    {
-        var entity = await _dbContext.ServiceOfferings.FirstOrDefaultAsync(s => s.Id == id);
+            entity.IsActive = true;
+            entity.CreatedAtUtc = DateTime.UtcNow;
 
-        if (entity == null)
-            return false;
+            _dbContext.ServiceOfferings.Add(entity);
+            await _dbContext.SaveChangesAsync();
 
-        _dbContext.ServiceOfferings.Remove(entity);
-        await _dbContext.SaveChangesAsync();
+            return _mapper.Map<ServiceOfferingDto>(entity);
+        }
 
-        return true;
+        public async Task<ServiceOfferingDto?> UpdateAsync(int id, UpdateServiceOfferingDto dto)
+        {
+            var entity = await _dbContext.ServiceOfferings.FirstOrDefaultAsync(s => s.Id == id);
+
+            if (entity == null)
+                return null;
+
+            _mapper.Map(dto, entity);
+
+            await _dbContext.SaveChangesAsync();
+
+            return _mapper.Map<ServiceOfferingDto>(entity);
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var entity = await _dbContext.ServiceOfferings.FirstOrDefaultAsync(s => s.Id == id);
+
+            if (entity == null)
+                return false;
+
+            _dbContext.ServiceOfferings.Remove(entity);
+            await _dbContext.SaveChangesAsync();
+
+            return true;
+        }
     }
 }
