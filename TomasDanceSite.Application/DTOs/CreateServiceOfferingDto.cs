@@ -1,21 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 using TomasDanceSite.Domain.Enums;
 
-namespace TomasDanceSite.Application.DTOs;
-
-public class CreateServiceOfferingDto
+namespace TomasDanceSite.Application.DTOs
 {
-    public string Name { get; set; } = null!;
+    public class CreateServiceOfferingDto
+    {
+        [Required]
+        [StringLength(100, MinimumLength = 2)]
+        public string Name { get; set; } = null!;
 
-    public string? Description { get; set; }
+        [StringLength(500)]
+        public string? Description { get; set; }
 
-    public ServiceType ServiceType { get; set; }
+        [Required]
+        public ServiceType ServiceType { get; set; }
 
-    public decimal? BasePriceSek { get; set; }
+        [Range(0, 20000, ErrorMessage = "Price must be between 0 and 20,000 SEK.")]
+        public decimal? BasePriceSek { get; set; }
 
-    public int? DurationMinutes { get; set; }
+        [Range(10, 300, ErrorMessage = "Duration must be between 10 and 300 minutes.")]
+        public int? DurationMinutes { get; set; }
+    }
 }
