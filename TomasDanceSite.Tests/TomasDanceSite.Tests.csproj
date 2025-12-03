@@ -1,25 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-	  <TargetFramework>net8.0</TargetFramework>
-	  <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <IsPackable>false</IsPackable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsPackable>false</IsPackable>
+		<PreserveCompilationContext>true</PreserveCompilationContext>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="coverlet.collector" Version="6.0.2" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-    <PackageReference Include="xunit" Version="2.9.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="AutoMapper" Version="15.1.0" />
+		<PackageReference Include="coverlet.collector" Version="6.0.2" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.0" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+		<PackageReference Include="NUnit" Version="4.4.0" />
+		<PackageReference Include="NUnit3TestAdapter" Version="5.2.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Using Include="Xunit" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\TomasDanceSite.Application\TomasDanceSite.Application.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\TomasDanceSite.Api\TomasDanceSite.Api.csproj" />
+		<ProjectReference Include="..\TomasDanceSite.Application\TomasDanceSite.Application.csproj" />
+		<ProjectReference Include="..\TomasDanceSite.Domain\TomasDanceSite.Domain.csproj" />
+		<ProjectReference Include="..\TomasDanceSite.Infrastructure\TomasDanceSite.Infrastructure.csproj" />
+	</ItemGroup>
 
 </Project>

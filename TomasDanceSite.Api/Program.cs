@@ -5,6 +5,10 @@ using TomasDanceSite.Application.Services;
 using TomasDanceSite.Api.Middleware;
 using TomasDanceSite.Application.Mappings;
 using Microsoft.Extensions.DependencyInjection;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using TomasDanceSite.Application.DTOs; 
+
 
 
 
@@ -17,7 +21,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddFluentValidation(fv =>
+    {
+        // We let FluentValidation handle model validation instead of DataAnnotations
+        fv.DisableDataAnnotationsValidation = true;
+    });
+
+builder.Services.AddValidatorsFromAssemblyContaining<CreateBookingDto>();
 
 // Swagger/OpenAPI support for .NET 8
 builder.Services.AddEndpointsApiExplorer();
@@ -58,3 +70,5 @@ app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
 app.Run();
+
+public partial class Program { }
