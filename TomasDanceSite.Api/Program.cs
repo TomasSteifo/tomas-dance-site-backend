@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using TomasDanceSite.Infrastructure.Persistence;
 using TomasDanceSite.Application.Interfaces;
 using TomasDanceSite.Application.Services;
@@ -7,10 +7,7 @@ using TomasDanceSite.Application.Mappings;
 using Microsoft.Extensions.DependencyInjection;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using TomasDanceSite.Application.DTOs; 
-
-
-
+using TomasDanceSite.Application.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,15 +36,24 @@ builder.Services.AddAutoMapper(cfg =>
 {
     cfg.AddProfile<ServiceOfferingProfile>();
     cfg.AddProfile<ClientProfile>();
-    cfg.AddProfile<BookingProfile>(); 
+    cfg.AddProfile<BookingProfile>();
+});
+
+// 👉 CORS CONFIGURATION (add this)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendDev", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
 });
 
 // Register application services
 builder.Services.AddScoped<IServiceOfferingService, ServiceOfferingService>();
 builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
-
-
 
 var app = builder.Build();
 
@@ -62,6 +68,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// 👉 Use the CORS policy (add this)
+app.UseCors("FrontendDev");
 
 app.UseAuthorization();
 
