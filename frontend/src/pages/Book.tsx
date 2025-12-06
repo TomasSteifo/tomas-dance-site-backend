@@ -1,120 +1,110 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MainLayout } from '@/layouts/MainLayout';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, User, Mail, Phone, MessageSquare, MapPin, Users, Zap } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
-import { useQuery } from '@tanstack/react-query';
-import { serviceOfferingsApi } from '@/lib/api/serviceOfferings';
-import { bookingsApi } from '@/lib/api/bookings';
-import { clientsApi } from '@/lib/api/clients';
-import { type ServiceOfferingDto, ServiceType } from '@/lib/api/types';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Calendar, Clock, User, Mail, Phone, MessageSquare, MapPin, Loader2 } from 'lucide-react';
+import { ServiceOfferingApi, ClientApi, BookingApi, toUtcIsoString } from '@/lib/api';
+import { ServiceOfferingDto, ServiceType } from '@/lib/api/types';
+import { mockServices } from '@/lib/api/mockData';
+import { toast } from 'sonner';
+
+// Map ServiceType enum to icon
+const serviceTypeIcons: Record<ServiceType, typeof User> = {
+  [ServiceType.PrivateLesson]: User,
+  [ServiceType.Workshop]: Calendar,
+  [ServiceType.EventBooking]: Calendar,
+  [ServiceType.Bootcamp]: Clock,
+  [ServiceType.Other]: Calendar,
+};
 
 const Book = () => {
-  const { toast } = useToast();
-  const { data, isLoading, error } = useQuery<ServiceOfferingDto[]>({
-    queryKey: ['service-offerings', 'for-booking'],
-    queryFn: serviceOfferingsApi.getAll,
-  });
-
-  const services = (data ?? []).filter((service) => service.IsActive !== false);
+  const [services, setServices] = useState<ServiceOfferingDto[]>([]);
+  const [loadingServices, setLoadingServices] = useState(true);
+  const [servicesError, setServicesError] = useState<string | null>(null);
+  const [usingMockData, setUsingMockData] = useState(false);
 
   const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    locationDetails: '',
     preferredDateTime: '',
+    locationDetails: '',
     message: '',
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
+  // Fetch active service offerings with fallback to mock data
   useEffect(() => {
-    if (!selectedServiceId && services.length > 0) {
-      setSelectedServiceId(services[0].Id);
+    async function fetchServices() {
+      try {
+        const data = await ServiceOfferingApi.getAll();
+        const activeServices = data.filter((s) => s.isActive);
+        setServices(activeServices);
+        if (activeServices.length > 0) {
+          setSelectedServiceId(activeServices[0].id);
+        }
+        setUsingMockData(false);
+      } catch (err) {
+        // Fallback to mock data when API is unavailable
+        console.warn('API unavailable, using mock data:', err);
+        setServices(mockServices);
+        setSelectedServiceId(mockServices[0]?.id ?? null);
+        setUsingMockData(true);
+        setServicesError(null); // Clear error since we have fallback data
+      } finally {
+        setLoadingServices(false);
+      }
     }
-  }, [services, selectedServiceId]);
-
-  const serviceTypeIcons: Record<ServiceType, typeof User> = {
-    [ServiceType.PrivateLesson]: User,
-    [ServiceType.EventBooking]: Calendar,
-    [ServiceType.Workshop]: Users,
-    [ServiceType.Bootcamp]: Zap,
-    [ServiceType.Other]: MapPin,
-  };
-
-  const formatDuration = (duration: number | null) => {
-    if (!duration) return 'Duration varies';
-    return `${duration} minutes`;
-  };
-
-  const formatPrice = (basePrice: number | null) => {
-    if (basePrice === null || basePrice === undefined) return 'Pricing on request';
-    return `From SEK ${basePrice.toLocaleString('sv-SE')}`;
-  };
+    fetchServices();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!selectedServiceId) {
-      toast({
-        title: 'Select a service',
-        description: 'Please choose a service offering before submitting your request.',
-        variant: 'destructive',
-      });
+      toast.error('Please select a service');
       return;
     }
 
     if (!formData.preferredDateTime) {
-      toast({
-        title: 'Pick a time',
-        description: 'Please select your preferred date and time.',
-        variant: 'destructive',
-      });
+      toast.error('Please select a preferred date and time');
       return;
     }
 
-    const preferredDateTimeUtc = new Date(formData.preferredDateTime).toISOString();
+    setSubmitting(true);
 
     try {
-      setIsSubmitting(true);
-      const client = await clientsApi.create({
-        FullName: formData.name,
-        Email: formData.email,
-        Phone: formData.phone || null,
+      // First, create or find client
+      const client = await ClientApi.create({
+        fullName: formData.name,
+        email: formData.email,
+        phone: formData.phone || null,
       });
 
-      await bookingsApi.create({
-        ClientId: client.Id,
-        ServiceOfferingId: selectedServiceId,
-        PreferredDateTime: preferredDateTimeUtc,
-        LocationDetails: formData.locationDetails || null,
-        Message: formData.message || null,
+      // Then create booking
+      await BookingApi.create({
+        clientId: client.id,
+        serviceOfferingId: selectedServiceId,
+        preferredDateTime: toUtcIsoString(formData.preferredDateTime),
+        locationDetails: formData.locationDetails || null,
+        message: formData.message || null,
       });
 
-      toast({
-        title: 'Booking request sent',
-        description: 'Thank you! We will confirm your booking shortly.',
-      });
-
+      toast.success('Booking request submitted! I\'ll be in touch within 24 hours.');
+      
+      // Reset form
       setFormData({
         name: '',
         email: '',
         phone: '',
-        locationDetails: '',
         preferredDateTime: '',
+        locationDetails: '',
         message: '',
       });
-    } catch (submissionError) {
-      const message = submissionError instanceof Error ? submissionError.message : 'Unable to submit your booking.';
-      toast({
-        title: 'Booking failed',
-        description: message,
-        variant: 'destructive',
-      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to submit booking');
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
@@ -146,46 +136,64 @@ const Book = () => {
                 <label className="block text-sm font-medium text-foreground mb-4">
                   What are you interested in?
                 </label>
-                {isLoading && (
-                  <div className="grid grid-cols-2 gap-4">
-                    {[...Array(4)].map((_, index) => (
-                      <div key={index} className="p-4 rounded-2xl border border-border bg-card">
-                        <Skeleton className="w-8 h-8 mb-2 rounded-lg" />
-                        <Skeleton className="h-4 w-24" />
-                      </div>
-                    ))}
+
+                {usingMockData && (
+                  <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 text-sm">
+                    Demo mode: Backend unavailable. Showing sample services.
                   </div>
                 )}
-                {!isLoading && services.length > 0 && (
+                
+                {loadingServices && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading services...
+                  </div>
+                )}
+
+                {servicesError && (
+                  <p className="text-destructive text-sm">{servicesError}</p>
+                )}
+
+                {!loadingServices && !servicesError && services.length === 0 && (
+                  <p className="text-muted-foreground text-sm">No services available at this time.</p>
+                )}
+
+                {!loadingServices && !servicesError && services.length > 0 && (
                   <div className="grid grid-cols-2 gap-4">
-                    {services.map((service: ServiceOfferingDto) => {
-                      const Icon = serviceTypeIcons[service.ServiceType] ?? User;
-                      const isSelected = selectedServiceId === service.Id;
+                    {services.map((service) => {
+                      const IconComponent = serviceTypeIcons[service.serviceType] || Calendar;
                       return (
                         <button
-                          key={service.Id}
+                          key={service.id}
                           type="button"
-                          onClick={() => setSelectedServiceId(service.Id)}
+                          onClick={() => setSelectedServiceId(service.id)}
                           className={`p-4 rounded-2xl border text-left transition-all duration-300 ${
-                            isSelected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'
+                            selectedServiceId === service.id
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:border-primary/30'
                           }`}
                         >
-                          <Icon className={`w-5 h-5 mb-2 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
-                          <div className={`text-sm font-medium ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
-                            {service.Name}
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {formatDuration(service.DurationMinutes)} · {formatPrice(service.BasePriceSek)}
-                          </div>
+                          <IconComponent
+                            className={`w-5 h-5 mb-2 ${
+                              selectedServiceId === service.id ? 'text-primary' : 'text-muted-foreground'
+                            }`}
+                          />
+                          <span
+                            className={`text-sm font-medium block ${
+                              selectedServiceId === service.id ? 'text-foreground' : 'text-muted-foreground'
+                            }`}
+                          >
+                            {service.name}
+                          </span>
+                          {service.basePriceSek && (
+                            <span className="text-xs text-muted-foreground">
+                              From {service.basePriceSek} SEK
+                            </span>
+                          )}
                         </button>
                       );
                     })}
                   </div>
-                )}
-                {!isLoading && services.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {error ? 'Unable to load services right now.' : 'No services available at the moment.'}
-                  </p>
                 )}
               </div>
 
@@ -236,17 +244,17 @@ const Book = () => {
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       className="w-full pl-12 pr-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                      placeholder="+1 (555) 000-0000"
+                      placeholder="+46 70 123 4567"
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Preferred Date &amp; Time
+                    Preferred Date & Time
                   </label>
                   <div className="relative">
-                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <input
                       type="datetime-local"
                       value={formData.preferredDateTime}
@@ -255,14 +263,11 @@ const Book = () => {
                       required
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Times are captured in your local timezone and sent as UTC to the booking system.
-                  </p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Location Details (optional)
+                    Location (optional)
                   </label>
                   <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -271,14 +276,14 @@ const Book = () => {
                       value={formData.locationDetails}
                       onChange={(e) => setFormData({ ...formData, locationDetails: e.target.value })}
                       className="w-full pl-12 pr-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                      placeholder="Studio, venue, or online preference"
+                      placeholder="Studio address or online"
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Message
+                    Message (optional)
                   </label>
                   <div className="relative">
                     <MessageSquare className="absolute left-4 top-4 w-5 h-5 text-muted-foreground" />
@@ -293,8 +298,21 @@ const Book = () => {
               </div>
 
               {/* Submit */}
-              <Button type="submit" variant="hero" size="lg" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Sending...' : 'Send Booking Request'}
+              <Button 
+                type="submit" 
+                variant="hero" 
+                size="lg" 
+                className="w-full"
+                disabled={submitting || loadingServices}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Send Booking Request'
+                )}
               </Button>
 
               <p className="text-sm text-center text-muted-foreground">

@@ -1,82 +1,103 @@
-const DEFAULT_API_BASE_URL = "https://localhost:7115";
+// ============= Generic API Client =============
 
 export const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) || DEFAULT_API_BASE_URL;
+  import.meta.env.VITE_API_BASE_URL || 'https://localhost:7115';
 
-export function buildQueryString(
-  query?: Record<string, string | number | boolean | undefined | null>
-): string {
-  if (!query) return "";
+export type QueryParams = Record<string, string | number | boolean | undefined | null>;
+
+// Build query string from object, skipping undefined/null values
+export function buildQueryString(query?: QueryParams): string {
+  if (!query) return '';
+
   const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value !== null) {
+      params.append(key, String(value));
+    }
+  }
 
-  Object.entries(query).forEach(([key, value]) => {
-    if (value === undefined || value === null) return;
-    params.append(key, String(value));
-  });
-
-  const queryString = params.toString();
-  return queryString ? `?${queryString}` : "";
+  const str = params.toString();
+  return str ? `?${str}` : '';
 }
 
-interface ApiRequestOptions {
-  query?: Record<string, string | number | boolean | undefined | null>;
-  body?: unknown;
+// Custom API error with status and body
+export class ApiError extends Error {
+  status: number;
+  body: unknown;
+
+  constructor(message: string, status: number, body?: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.body = body;
+  }
 }
 
-async function apiRequest<T>(
+// Generic API request function
+export async function apiRequest<T>(
   path: string,
-  method: "GET" | "POST" | "PUT" | "DELETE",
-  options: ApiRequestOptions = {}
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  options?: {
+    query?: QueryParams;
+    body?: unknown;
+    headers?: HeadersInit;
+  }
 ): Promise<T> {
-  const { query, body } = options;
-  const queryString = buildQueryString(query);
-  const url = `${API_BASE_URL}${path}${queryString}`;
+  const url = API_BASE_URL + path + buildQueryString(options?.query);
 
-  const response = await fetch(url, {
+  const fetchOptions: RequestInit = {
     method,
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
+      ...options?.headers,
     },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  };
+
+  if (options?.body !== undefined) {
+    fetchOptions.body = JSON.stringify(options.body);
+  }
+
+  const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
-    let errorBody: unknown;
+    let errorBody: { title?: string; message?: string } | null = null;
     try {
       errorBody = await response.json();
     } catch {
-      errorBody = undefined;
+      // Ignore JSON parse errors
     }
 
-    const message =
-      (errorBody as { title?: string; message?: string } | undefined)?.title ||
-      (errorBody as { title?: string; message?: string } | undefined)?.message ||
+    const errorMessage =
+      errorBody?.title ||
+      errorBody?.message ||
       `API request failed with status ${response.status}`;
 
-    const error: Error & { status?: number; body?: unknown } = new Error(message);
-    error.status = response.status;
-    error.body = errorBody;
-    throw error;
+    throw new ApiError(errorMessage, response.status, errorBody);
   }
 
+  // Handle 204 No Content
   if (response.status === 204) {
     return undefined as T;
   }
 
-  return (await response.json()) as T;
+  return response.json() as Promise<T>;
 }
 
+// Convenience API client object
 export const apiClient = {
-  get<T>(path: string, query?: ApiRequestOptions["query"]) {
-    return apiRequest<T>(path, "GET", { query });
+  get<T>(path: string, query?: QueryParams): Promise<T> {
+    return apiRequest<T>(path, 'GET', { query });
   },
-  post<T>(path: string, body?: unknown) {
-    return apiRequest<T>(path, "POST", { body });
+
+  post<T>(path: string, body?: unknown): Promise<T> {
+    return apiRequest<T>(path, 'POST', { body });
   },
-  put<T>(path: string, body?: unknown) {
-    return apiRequest<T>(path, "PUT", { body });
+
+  put<T>(path: string, body?: unknown): Promise<T> {
+    return apiRequest<T>(path, 'PUT', { body });
   },
-  delete<T>(path: string) {
-    return apiRequest<T>(path, "DELETE");
+
+  delete<T>(path: string): Promise<T> {
+    return apiRequest<T>(path, 'DELETE');
   },
 };

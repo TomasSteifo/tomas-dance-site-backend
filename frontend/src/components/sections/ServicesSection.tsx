@@ -1,37 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowUpRight, User, Users, Calendar, Zap, MapPin } from 'lucide-react';
+import { ArrowUpRight, User, Users, Calendar, Zap, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { serviceOfferingsApi } from '@/lib/api/serviceOfferings';
-import { type ServiceOfferingDto, ServiceType } from '@/lib/api/types';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ServiceOfferingApi } from '@/lib/api';
+import { ServiceOfferingDto, ServiceType } from '@/lib/api/types';
+import { mockServices } from '@/lib/api/mockData';
 
+// Map ServiceType enum to icon
 const serviceTypeIcons: Record<ServiceType, typeof User> = {
   [ServiceType.PrivateLesson]: User,
-  [ServiceType.EventBooking]: Calendar,
   [ServiceType.Workshop]: Users,
+  [ServiceType.EventBooking]: Calendar,
   [ServiceType.Bootcamp]: Zap,
-  [ServiceType.Other]: MapPin,
+  [ServiceType.Other]: Calendar,
 };
-
-function formatPrice(basePrice: number | null) {
-  if (basePrice === null || basePrice === undefined) return 'Pricing on request';
-  return `From SEK ${basePrice.toLocaleString('sv-SE')}`;
-}
-
-function formatDuration(duration: number | null) {
-  if (!duration) return 'Duration varies';
-  return `${duration} minutes`;
-}
 
 export function ServicesSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const { data, isLoading, error } = useQuery<ServiceOfferingDto[]>({
-    queryKey: ['service-offerings', 'home'],
-    queryFn: serviceOfferingsApi.getAll,
-  });
+  const [services, setServices] = useState<ServiceOfferingDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -50,6 +39,27 @@ export function ServicesSection() {
 
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    async function fetchServices() {
+      try {
+        const data = await ServiceOfferingApi.getAll();
+        // Filter active and take first 4
+        setServices(data.filter((s) => s.isActive).slice(0, 4));
+      } catch (err) {
+        // Fallback to mock data when API is unavailable
+        console.warn('API unavailable, using mock data:', err);
+        setServices(mockServices.slice(0, 4));
+        setError(null); // Clear error since we have fallback data
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchServices();
+  }, []);
+
+  // Mark first PrivateLesson as featured
+  const featuredId = services.find((s) => s.serviceType === ServiceType.PrivateLesson)?.id;
 
   return (
     <section ref={sectionRef} className="py-32 relative overflow-hidden">
@@ -90,73 +100,75 @@ export function ServicesSection() {
           </Link>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center gap-2 text-muted-foreground py-12">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            Loading services...
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="text-center py-12">
+            <p className="text-destructive">{error}</p>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && services.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No services available at this time.</p>
+          </div>
+        )}
+
         {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {isLoading && (
-            <>
-              {[...Array(4)].map((_, index) => (
-                <div
-                  key={index}
+        {!loading && !error && services.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {services.map((service, index) => {
+              const IconComponent = serviceTypeIcons[service.serviceType] || Calendar;
+              const isFeatured = service.id === featuredId;
+
+              return (
+                <Link
+                  key={service.id}
+                  to="/book"
                   className={cn(
-                    'p-8 lg:p-10 rounded-3xl border bg-card border-border/50',
+                    'group relative p-8 lg:p-10 rounded-3xl border transition-all duration-500',
+                    isFeatured
+                      ? 'bg-gradient-to-br from-primary/5 via-card to-card border-primary/20 hover:border-primary/40'
+                      : 'bg-card border-border/50 hover:border-primary/30',
                     isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
                   )}
+                  style={{
+                    transitionDelay: isVisible ? `${(index + 2) * 100}ms` : '0ms',
+                  }}
                 >
-                  <Skeleton className="w-12 h-12 mb-6 rounded-xl" />
-                  <Skeleton className="h-6 w-3/4 mb-3" />
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-2/3" />
-                </div>
-              ))}
-            </>
-          )}
-
-          {!isLoading &&
-            data
-              ?.filter((service) => service.IsActive !== false)
-              .slice(0, 4)
-              .map((service: ServiceOfferingDto, index) => {
-                const Icon = serviceTypeIcons[service.ServiceType] ?? User;
-                return (
-                  <Link
-                    key={service.Id}
-                    to="/services"
-                    className={cn(
-                      'group relative p-8 lg:p-10 rounded-3xl border transition-all duration-500 bg-card border-border/50 hover:border-primary/30',
-                      isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
-                    )}
-                    style={{
-                      transitionDelay: isVisible ? `${(index + 2) * 100}ms` : '0ms',
-                    }}
-                  >
-                    {/* Icon */}
-                    <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center mb-6 group-hover:bg-primary/10 transition-colors duration-500">
-                      <Icon className="w-6 h-6 text-foreground group-hover:text-primary transition-colors duration-500" />
+                  {/* Featured Badge */}
+                  {isFeatured && (
+                    <div className="absolute top-6 right-6 px-3 py-1 rounded-full bg-primary/10 text-xs font-medium text-primary">
+                      Most Popular
                     </div>
+                  )}
 
-                    {/* Content */}
-                    <h3 className="text-xl font-semibold text-foreground mb-3 flex items-center gap-2">
-                      {service.Name}
-                      <ArrowUpRight className="w-5 h-5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
-                    </h3>
-                    <p className="text-muted-foreground leading-relaxed mb-4">
-                      {service.Description || 'Personalized instruction to fit your goals.'}
-                    </p>
-                    <div className="text-sm text-muted-foreground flex items-center gap-4">
-                      <span>{formatPrice(service.BasePriceSek)}</span>
-                      <span aria-hidden="true">•</span>
-                      <span>{formatDuration(service.DurationMinutes)}</span>
-                    </div>
-                  </Link>
-                );
-              })}
+                  {/* Icon */}
+                  <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center mb-6 group-hover:bg-primary/10 transition-colors duration-500">
+                    <IconComponent className="w-6 h-6 text-foreground group-hover:text-primary transition-colors duration-500" />
+                  </div>
 
-          {!isLoading && !data?.length && (
-            <div className="col-span-2 text-muted-foreground">
-              {error ? 'Unable to load services right now.' : 'No services available at the moment.'}
-            </div>
-          )}
-        </div>
+                  {/* Content */}
+                  <h3 className="text-xl font-semibold text-foreground mb-3 flex items-center gap-2">
+                    {service.name}
+                    <ArrowUpRight className="w-5 h-5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {service.description || 'Contact us for more details about this service.'}
+                  </p>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );

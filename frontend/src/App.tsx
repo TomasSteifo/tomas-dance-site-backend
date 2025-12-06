@@ -9,6 +9,9 @@ import Book from "./pages/Book";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import AdminBookings from "./pages/admin/AdminBookings";
+import AdminBookingDetail from "./pages/admin/AdminBookingDetail";
+import AdminClients from "./pages/admin/AdminClients";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +27,9 @@ const App = () => (
           <Route path="/book" element={<Book />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/admin/bookings" element={<AdminBookings />} />
+          <Route path="/admin/bookings/:id" element={<AdminBookingDetail />} />
+          <Route path="/admin/clients" element={<AdminClients />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

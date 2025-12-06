@@ -1,5 +1,6 @@
-// Shared DTOs and enums that mirror the backend contracts
+// ============= Backend DTOs & Enums =============
 
+// Enums (matching C# backend)
 export enum BookingStatus {
   Pending = 0,
   Confirmed = 1,
@@ -27,85 +28,88 @@ export enum ServiceType {
   Other = 5,
 }
 
+// Client DTOs
 export interface ClientDto {
-  Id: number;
-  FullName: string;
-  Email: string;
-  Phone: string | null;
-  CreatedAtUtc: string;
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  createdAtUtc: string; // ISO 8601
 }
 
 export interface CreateClientDto {
-  FullName: string;
-  Email: string;
-  Phone: string | null | undefined;
+  fullName: string;
+  email: string;
+  phone?: string | null;
 }
 
 export interface UpdateClientDto {
-  FullName: string;
-  Email: string;
-  Phone: string | null | undefined;
+  fullName: string;
+  email: string;
+  phone?: string | null;
 }
 
+// Service Offering DTOs
 export interface ServiceOfferingDto {
-  Id: number;
-  Name: string;
-  Description: string | null;
-  ServiceType: ServiceType;
-  BasePriceSek: number | null;
-  DurationMinutes: number | null;
-  IsActive: boolean;
+  id: number;
+  name: string;
+  description: string | null;
+  serviceType: ServiceType;
+  basePriceSek: number | null;
+  durationMinutes: number | null;
+  isActive: boolean;
 }
 
 export interface CreateServiceOfferingDto {
-  Name: string;
-  Description: string | null | undefined;
-  ServiceType: ServiceType;
-  BasePriceSek: number | null | undefined;
-  DurationMinutes: number | null | undefined;
+  name: string;
+  description?: string | null;
+  serviceType: ServiceType;
+  basePriceSek?: number | null;
+  durationMinutes?: number | null;
 }
 
 export interface UpdateServiceOfferingDto {
-  Name: string;
-  Description: string | null | undefined;
-  ServiceType: ServiceType;
-  BasePriceSek: number | null | undefined;
-  DurationMinutes: number | null | undefined;
-  IsActive: boolean;
+  name: string;
+  description?: string | null;
+  serviceType: ServiceType;
+  basePriceSek?: number | null;
+  durationMinutes?: number | null;
+  isActive: boolean;
 }
 
+// Booking DTOs
 export interface BookingDto {
-  Id: number;
-  ClientId: number;
-  ServiceOfferingId: number;
-  PreferredDateTime: string;
-  LocationDetails: string | null;
-  Message: string | null;
-  Status: BookingStatus;
-  CreatedAtUtc: string;
+  id: number;
+  clientId: number;
+  serviceOfferingId: number;
+  preferredDateTime: string; // ISO 8601 UTC
+  locationDetails: string | null;
+  message: string | null;
+  status: BookingStatus;
+  createdAtUtc: string; // ISO 8601 UTC
 }
 
 export interface CreateBookingDto {
-  ClientId: number;
-  ServiceOfferingId: number;
-  PreferredDateTime: string;
-  LocationDetails: string | null | undefined;
-  Message: string | null | undefined;
+  clientId: number;
+  serviceOfferingId: number;
+  preferredDateTime: string; // ISO 8601 UTC
+  locationDetails?: string | null;
+  message?: string | null;
 }
 
 export interface UpdateBookingDto {
-  PreferredDateTime: string | null | undefined;
-  LocationDetails: string | null | undefined;
-  Message: string | null | undefined;
-  Status: BookingStatus | null | undefined;
+  preferredDateTime?: string | null; // ISO 8601 UTC
+  locationDetails?: string | null;
+  message?: string | null;
+  status?: BookingStatus | null;
 }
 
 export interface BookingQueryParameters {
-  Status?: BookingStatus | null;
-  ClientId?: number | null;
-  ServiceOfferingId?: number | null;
-  FromDate?: string | null;
-  ToDate?: string | null;
-  SortBy?: string | null;
-  Descending: boolean;
+  status?: BookingStatus | null;
+  clientId?: number | null;
+  serviceOfferingId?: number | null;
+  fromDate?: string | null; // ISO 8601 UTC
+  toDate?: string | null; // ISO 8601 UTC
+  sortBy?: 'date' | 'created' | 'status' | null;
+  descending?: boolean | null;
 }

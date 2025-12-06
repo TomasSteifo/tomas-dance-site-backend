@@ -1,28 +1,32 @@
-import { apiClient } from "./client";
-import {
-  type CreateServiceOfferingDto,
-  type ServiceOfferingDto,
-  type UpdateServiceOfferingDto,
-} from "./types";
+// ============= Service Offerings API Module =============
 
-export const serviceOfferingsApi = {
+import { apiClient } from './client';
+import {
+  ServiceOfferingDto,
+  CreateServiceOfferingDto,
+  UpdateServiceOfferingDto,
+} from './types';
+
+const BASE_PATH = '/api/ServiceOfferings';
+
+export const ServiceOfferingApi = {
   getAll(): Promise<ServiceOfferingDto[]> {
-    return apiClient.get<ServiceOfferingDto[]>("/api/ServiceOfferings");
+    return apiClient.get<ServiceOfferingDto[]>(BASE_PATH);
   },
 
   getById(id: number): Promise<ServiceOfferingDto> {
-    return apiClient.get<ServiceOfferingDto>(`/api/ServiceOfferings/${id}`);
+    return apiClient.get<ServiceOfferingDto>(`${BASE_PATH}/${id}`);
   },
 
   create(payload: CreateServiceOfferingDto): Promise<ServiceOfferingDto> {
-    return apiClient.post<ServiceOfferingDto>("/api/ServiceOfferings", payload);
+    return apiClient.post<ServiceOfferingDto>(BASE_PATH, payload);
   },
 
   update(id: number, payload: UpdateServiceOfferingDto): Promise<ServiceOfferingDto> {
-    return apiClient.put<ServiceOfferingDto>(`/api/ServiceOfferings/${id}`, payload);
+    return apiClient.put<ServiceOfferingDto>(`${BASE_PATH}/${id}`, payload);
   },
 
   delete(id: number): Promise<void> {
-    return apiClient.delete<void>(`/api/ServiceOfferings/${id}`);
+    return apiClient.delete<void>(`${BASE_PATH}/${id}`);
   },
 };
