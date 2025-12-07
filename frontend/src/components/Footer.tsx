@@ -4,6 +4,7 @@ const footerLinks = {
   navigation: [
     { name: 'Home', path: '/' },
     { name: 'Services', path: '/services' },
+    { name: 'Pricing', path: '/pricing' },
     { name: 'Book Lesson', path: '/book' },
     { name: 'About', path: '/about' },
     { name: 'Contact', path: '/contact' },

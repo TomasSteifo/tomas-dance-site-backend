@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { MainLayout } from '@/layouts/MainLayout';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BookingApi } from '@/lib/api';
 import { BookingDto, BookingStatus } from '@/lib/api/types';
-import { Loader2, Eye, Calendar, Clock } from 'lucide-react';
+import { Loader2, Eye, Calendar, Clock, Search, Filter, Bell } from 'lucide-react';
 
 const statusLabels: Record<BookingStatus, string> = {
   [BookingStatus.Pending]: 'Pending',
@@ -28,6 +30,24 @@ const AdminBookings = () => {
   const [bookings, setBookings] = useState<BookingDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  const filteredBookings = useMemo(() => {
+    return bookings.filter((booking) => {
+      const matchesSearch = searchQuery === '' || 
+        booking.id.toString().includes(searchQuery) ||
+        booking.clientId.toString().includes(searchQuery) ||
+        booking.serviceOfferingId.toString().includes(searchQuery) ||
+        booking.locationDetails?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        booking.message?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || 
+        booking.status === parseInt(statusFilter);
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [bookings, searchQuery, statusFilter]);
 
   useEffect(() => {
     async function fetchBookings() {
@@ -74,6 +94,50 @@ const AdminBookings = () => {
             </Button>
           </div>
 
+          {/* Notifications Placeholder */}
+          <div className="mb-6 p-4 rounded-2xl bg-primary/5 border border-primary/20">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Bell className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-medium text-foreground">Notifications</h3>
+                <p className="text-sm text-muted-foreground">
+                  {bookings.filter(b => b.status === BookingStatus.Pending).length} pending bookings require attention
+                </p>
+              </div>
+            </div>
+            {/* TODO: Add real-time notifications via WebSocket or polling when backend supports it */}
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by ID, client, service, or message..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-muted-foreground" />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value={BookingStatus.Pending.toString()}>Pending</SelectItem>
+                  <SelectItem value={BookingStatus.Confirmed.toString()}>Confirmed</SelectItem>
+                  <SelectItem value={BookingStatus.Cancelled.toString()}>Cancelled</SelectItem>
+                  <SelectItem value={BookingStatus.Completed.toString()}>Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {loading && (
             <div className="flex items-center justify-center gap-2 text-muted-foreground py-20">
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -87,14 +151,16 @@ const AdminBookings = () => {
             </div>
           )}
 
-          {!loading && !error && bookings.length === 0 && (
+          {!loading && !error && filteredBookings.length === 0 && (
             <div className="text-center py-20">
               <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No upcoming bookings found.</p>
+              <p className="text-muted-foreground">
+                {bookings.length === 0 ? 'No upcoming bookings found.' : 'No bookings match your filters.'}
+              </p>
             </div>
           )}
 
-          {!loading && !error && bookings.length > 0 && (
+          {!loading && !error && filteredBookings.length > 0 && (
             <div className="bg-card rounded-2xl border border-border overflow-hidden">
               <table className="w-full">
                 <thead className="bg-secondary/50">
@@ -108,7 +174,7 @@ const AdminBookings = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {bookings.map((booking) => (
+                  {filteredBookings.map((booking) => (
                     <tr key={booking.id} className="hover:bg-secondary/30 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">

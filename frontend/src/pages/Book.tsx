@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { MainLayout } from '@/layouts/MainLayout';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, User, Mail, Phone, MessageSquare, MapPin, Loader2 } from 'lucide-react';
+import { Calendar, Clock, User, Mail, Phone, MessageSquare, MapPin, Loader2, CalendarPlus, CheckCircle } from 'lucide-react';
 import { ServiceOfferingApi, ClientApi, BookingApi, toUtcIsoString } from '@/lib/api';
 import { ServiceOfferingDto, ServiceType } from '@/lib/api/types';
 import { mockServices } from '@/lib/api/mockData';
+import { generateGoogleCalendarUrl } from '@/lib/api/calendar';
 import { toast } from 'sonner';
 
 // Map ServiceType enum to icon
@@ -32,7 +33,10 @@ const Book = () => {
     message: '',
   });
   const [submitting, setSubmitting] = useState(false);
-
+  const [bookingSuccess, setBookingSuccess] = useState<{
+    dateTime: string;
+    serviceName: string;
+  } | null>(null);
   // Fetch active service offerings with fallback to mock data
   useEffect(() => {
     async function fetchServices() {
@@ -90,6 +94,13 @@ const Book = () => {
         message: formData.message || null,
       });
 
+      const selectedService = services.find(s => s.id === selectedServiceId);
+      
+      setBookingSuccess({
+        dateTime: formData.preferredDateTime,
+        serviceName: selectedService?.name || 'Dance Class',
+      });
+      
       toast.success('Booking request submitted! I\'ll be in touch within 24 hours.');
       
       // Reset form
@@ -126,10 +137,52 @@ const Book = () => {
         </div>
       </section>
 
-      {/* Booking Form */}
+      {/* Booking Form or Success State */}
       <section className="py-20">
         <div className="container mx-auto px-6">
           <div className="max-w-2xl mx-auto">
+            {bookingSuccess ? (
+              <div className="text-center py-12">
+                <CheckCircle className="w-20 h-20 text-primary mx-auto mb-6" />
+                <h2 className="text-2xl font-semibold text-foreground mb-4">Booking Request Submitted!</h2>
+                <p className="text-muted-foreground mb-2">
+                  Thank you for your booking request. I'll review it and get back to you within 24 hours.
+                </p>
+                <p className="text-muted-foreground mb-8">
+                  If you entered your email, you'll receive a confirmation shortly.
+                </p>
+                
+                {/* Add to Calendar */}
+                <div className="bg-secondary/50 rounded-2xl p-6 mb-8">
+                  <h3 className="font-medium text-foreground mb-4 flex items-center justify-center gap-2">
+                    <CalendarPlus className="w-5 h-5 text-primary" />
+                    Add to Your Calendar
+                  </h3>
+                  <Button
+                    variant="outline"
+                    asChild
+                  >
+                    <a
+                      href={generateGoogleCalendarUrl({
+                        title: `${bookingSuccess.serviceName} with Tomas Dance`,
+                        description: 'Dance class booking - pending confirmation',
+                        startDateTime: bookingSuccess.dateTime,
+                        durationMinutes: 60,
+                      })}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <CalendarPlus className="w-4 h-4 mr-2" />
+                      Add to Google Calendar
+                    </a>
+                  </Button>
+                </div>
+
+                <Button variant="hero" onClick={() => setBookingSuccess(null)}>
+                  Book Another Class
+                </Button>
+              </div>
+            ) : (
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Service Selection */}
               <div>
@@ -319,6 +372,7 @@ const Book = () => {
                 I typically respond within 24 hours. Looking forward to dancing with you!
               </p>
             </form>
+            )}
           </div>
         </div>
       </section>
